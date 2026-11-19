@@ -10,4 +10,10 @@ export default defineConfig({
     rules: { "vite-plus/prefer-vite-plus-imports": "error" },
     options: { typeAware: true, typeCheck: true },
   },
+  server: {
+    port: 5173,
+    proxy: {
+      "/api": "http://localhost:3000",
+    },
+  },
 });
