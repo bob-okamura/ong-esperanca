@@ -7,15 +7,6 @@ DROP DATABASE IF EXISTS ong_esperanca;
 CREATE DATABASE ong_esperanca CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ong_esperanca;
 
--- Voluntários que acessam o sistema. O banco guarda só o hash bcrypt da senha.
-CREATE TABLE usuario (
-  id_usuario INT AUTO_INCREMENT PRIMARY KEY,
-  nome       VARCHAR(100) NOT NULL,
-  email      VARCHAR(100) NOT NULL UNIQUE,
-  senha_hash CHAR(60) NOT NULL,
-  criado_em  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
-);
-
 -- Catálogo de espécies atendidas (Cão, Gato...)
 CREATE TABLE especie (
   id_especie INT AUTO_INCREMENT PRIMARY KEY,
