@@ -1,0 +1,80 @@
+### 1. Saúde da API (pública): deve responder 200
+GET http://localhost:3000/api/health
+
+### 2. Sem token: deve responder 401
+POST http://localhost:3000/api/adotantes
+Content-Type: application/json
+
+{ "nome": "Teste sem token", "telefone": "(14) 90000-0000", "cidade": "Marília" }
+
+### 3. Login com senha errada: deve responder 401
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{ "email": "voluntario@esperanca.exemplo.com", "senha": "errada" }
+
+### 4. Login com e-mail que não existe: deve responder 401 (mesma mensagem)
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{ "email": "ninguem@exemplo.com", "senha": "qualquer" }
+
+### 5. Login sem senha: deve responder 400
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{ "email": "voluntario@esperanca.exemplo.com" }
+
+### 6. Login correto: guarda o token na variável "login"
+# @name login
+POST http://localhost:3000/api/auth/login
+Content-Type: application/json
+
+{ "email": "voluntario@esperanca.exemplo.com", "senha": "esperanca123" }
+
+###
+@token = {{login.response.body.token}}
+
+### 7. Com token: deve responder 200
+GET http://localhost:3000/api/adotantes
+Authorization: Bearer {{token}}
+
+### 8. Com token: deve responder 201
+POST http://localhost:3000/api/adotantes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "nome": "Adotante do teste", "email": "teste@exemplo.com", "telefone": "(14) 90000-0001", "cidade": "Marília" }
+
+### 9. Token com uma letra a mais no final: deve responder 401
+GET http://localhost:3000/api/adotantes
+Authorization: Bearer {{token}}x
+
+### Animais disponíveis para adoção
+GET http://localhost:3000/api/animais?status=disponivel
+Authorization: Bearer {{token}}
+
+### Cadastrar animal: deve responder 201
+POST http://localhost:3000/api/animais
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "id_especie": 2, "nome": "Nina", "sexo": "F", "porte": "pequeno", "data_entrada": "2026-11-20", "castrado": true }
+
+### Registrar adoção da Mel (id 2): deve responder 201
+POST http://localhost:3000/api/adocoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "id_adotante": 2, "id_animal": 2, "data_adocao": "2026-11-24" }
+
+### Adotar a Mel de novo: deve responder 409
+POST http://localhost:3000/api/adocoes
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "id_adotante": 2, "id_animal": 2, "data_adocao": "2026-11-24" }
+
+### Listar adoções
+GET http://localhost:3000/api/adocoes
+Authorization: Bearer {{token}}
