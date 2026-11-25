@@ -1,0 +1,263 @@
+openapi: 3.0.3
+info:
+  title: ONG Esperança API
+  description: API do MVP de gestão de adoções de animais (PIE II)
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Desenvolvimento local
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get:
+      summary: Verifica a API e o banco
+      security: []
+      responses:
+        "200": { description: API e banco no ar }
+        "500": { description: "API no ar, banco com erro" }
+  /auth/login:
+    post:
+      summary: Confere e-mail e senha e devolve um token JWT
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Login" }
+      responses:
+        "200":
+          description: Login aceito
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Token" }
+        "400": { description: E-mail ou senha não informados }
+        "401": { description: E-mail ou senha inválidos }
+  /adotantes:
+    get:
+      summary: Lista adotantes
+      responses:
+        "200":
+          description: Lista de adotantes
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Adotante" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+    post:
+      summary: Cadastra adotante
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdotanteInput" }
+      responses:
+        "201": { description: Adotante criado }
+        "400": { description: Dados inválidos }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "409": { description: E-mail já cadastrado }
+  /adotantes/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    get:
+      summary: Busca um adotante
+      responses:
+        "200":
+          description: Adotante encontrado
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Adotante" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { description: Adotante não encontrado }
+    put:
+      summary: Edita um adotante
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdotanteInput" }
+      responses:
+        "200": { description: Adotante atualizado }
+        "400": { description: Dados inválidos }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { description: Adotante não encontrado }
+        "409": { description: E-mail já cadastrado }
+    delete:
+      summary: Exclui um adotante
+      responses:
+        "204": { description: Adotante excluído }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { description: Adotante não encontrado }
+        "409": { description: Adotante possui adoções e não pode ser excluído }
+  /especies:
+    get:
+      summary: Lista o catálogo de espécies
+      responses:
+        "200":
+          description: Lista de espécies
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Especie" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+  /animais:
+    get:
+      summary: Lista animais
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filtra pela situação (ex. disponivel)
+          schema: { type: string, enum: [disponivel, em_tratamento, adotado] }
+      responses:
+        "200":
+          description: Lista de animais
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Animal" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+    post:
+      summary: Cadastra animal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AnimalInput" }
+      responses:
+        "201": { description: Animal criado }
+        "400": { description: "Dados inválidos ou espécie inexistente" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+  /animais/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer } }
+    delete:
+      summary: Exclui um animal
+      responses:
+        "204": { description: Animal excluído }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "404": { description: Animal não encontrado }
+        "409": { description: Animal já foi adotado e não pode ser excluído }
+  /adocoes:
+    get:
+      summary: Lista adoções, as mais recentes primeiro
+      responses:
+        "200":
+          description: Lista de adoções
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Adocao" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+    post:
+      summary: Registra adoção e marca o animal como adotado
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AdocaoInput" }
+      responses:
+        "201": { description: Adoção registrada }
+        "400": { description: "Dados inválidos, animal ou adotante inexistente" }
+        "401": { $ref: "#/components/responses/NaoAutorizado" }
+        "409": { description: Animal não está disponível para adoção }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    NaoAutorizado:
+      description: Token ausente, inválido ou expirado
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Erro" }
+  schemas:
+    Erro:
+      type: object
+      properties:
+        erro: { type: string }
+    Login:
+      type: object
+      required: [email, senha]
+      properties:
+        email: { type: string, format: email }
+        senha: { type: string }
+    Token:
+      type: object
+      properties:
+        token: { type: string }
+        usuario:
+          type: object
+          properties:
+            nome: { type: string }
+            email: { type: string }
+    AdotanteInput:
+      type: object
+      required: [nome, telefone, cidade]
+      properties:
+        nome: { type: string, maxLength: 150 }
+        email: { type: string, format: email, maxLength: 100, nullable: true }
+        telefone: { type: string, maxLength: 20 }
+        cidade: { type: string, maxLength: 80 }
+    Adotante:
+      allOf:
+        - type: object
+          properties:
+            id_adotante: { type: integer }
+        - $ref: "#/components/schemas/AdotanteInput"
+    Especie:
+      type: object
+      properties:
+        id_especie: { type: integer }
+        nome: { type: string }
+    AnimalInput:
+      type: object
+      required: [id_especie, nome, sexo, porte, data_entrada]
+      properties:
+        id_especie: { type: integer }
+        nome: { type: string, maxLength: 80 }
+        sexo: { type: string, enum: [M, F] }
+        porte: { type: string, enum: [pequeno, medio, grande] }
+        data_entrada: { type: string, format: date }
+        data_nascimento: { type: string, format: date, nullable: true }
+        castrado: { type: boolean, default: false }
+        status: { type: string, enum: [disponivel, em_tratamento], default: disponivel }
+        descricao: { type: string, maxLength: 255, nullable: true }
+    Animal:
+      type: object
+      properties:
+        id_animal: { type: integer }
+        id_especie: { type: integer }
+        especie: { type: string }
+        nome: { type: string }
+        sexo: { type: string, enum: [M, F] }
+        porte: { type: string, enum: [pequeno, medio, grande] }
+        data_nascimento: { type: string, format: date, nullable: true }
+        data_entrada: { type: string, format: date }
+        castrado: { type: boolean }
+        status: { type: string, enum: [disponivel, em_tratamento, adotado] }
+        descricao: { type: string, nullable: true }
+    AdocaoInput:
+      type: object
+      required: [id_adotante, id_animal, data_adocao]
+      properties:
+        id_adotante: { type: integer }
+        id_animal: { type: integer }
+        data_adocao: { type: string, format: date }
+        observacao: { type: string, maxLength: 255, nullable: true }
+    Adocao:
+      type: object
+      properties:
+        id_adocao: { type: integer }
+        data_adocao: { type: string, format: date }
+        observacao: { type: string, nullable: true }
+        animal: { type: string }
+        especie: { type: string }
+        adotante: { type: string }
+        cidade: { type: string }
